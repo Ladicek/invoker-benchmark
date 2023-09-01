@@ -6,6 +6,8 @@ import cz.ladicek.invoker.benchmark.arc.ArcMethodTransformerInvoker;
 import cz.ladicek.invoker.benchmark.arc.ArcSingleInterfaceImplementationTransformerInvoker;
 import cz.ladicek.invoker.benchmark.beans.InvokableBean;
 import cz.ladicek.invoker.benchmark.cdi.Invoker;
+import cz.ladicek.invoker.benchmark.weld.WeldDirectInvoker;
+import cz.ladicek.invoker.benchmark.weld.WeldMethodTransformerInvoker;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -29,6 +31,9 @@ public class InvokerBenchmark {
     private Invoker<InvokableBean, String> arcSingleInterfaceImplementationTransformerInvoker;
     private Invoker<InvokableBean, String> arcFreshInterfaceImplementationTransformerInvoker;
 
+    private Invoker<InvokableBean, String> weldDirectInvoker;
+    private Invoker<InvokableBean, String> weldMethodTransformerInvoker;
+
     @Setup
     public void setup() {
         bean = new InvokableBean();
@@ -37,6 +42,9 @@ public class InvokerBenchmark {
         arcMethodTransformerInvoker = ArcMethodTransformerInvoker.INSTANCE;
         arcSingleInterfaceImplementationTransformerInvoker = ArcSingleInterfaceImplementationTransformerInvoker.INSTANCE;
         arcFreshInterfaceImplementationTransformerInvoker = ArcFreshInterfaceImplementationTransformerInvoker.INSTANCE;
+
+        weldDirectInvoker = WeldDirectInvoker.INSTANCE;
+        weldMethodTransformerInvoker = WeldMethodTransformerInvoker.INSTANCE;
     }
 
     @Benchmark
@@ -62,5 +70,15 @@ public class InvokerBenchmark {
     @Benchmark
     public String arcFreshInterfaceImplementationTransformerInvoker() {
         return arcFreshInterfaceImplementationTransformerInvoker.invoke(bean, new Object[]{42});
+    }
+
+    @Benchmark
+    public String weldDirectInvoker() {
+        return weldDirectInvoker.invoke(bean, new Object[]{42});
+    }
+
+    @Benchmark
+    public String weldMethodTransformerInvoker() {
+        return weldMethodTransformerInvoker.invoke(bean, new Object[]{42});
     }
 }

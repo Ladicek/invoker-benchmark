@@ -4,6 +4,10 @@ import cz.ladicek.invoker.benchmark.arc.ArcDirectInvoker;
 import cz.ladicek.invoker.benchmark.arc.ArcFreshInterfaceImplementationTransformerInvoker;
 import cz.ladicek.invoker.benchmark.arc.ArcMethodTransformerInvoker;
 import cz.ladicek.invoker.benchmark.arc.ArcSingleInterfaceImplementationTransformerInvoker;
+import cz.ladicek.invoker.benchmark.reflection.ReflectionDirectInvoker;
+import cz.ladicek.invoker.benchmark.reflection.ReflectionFreshInterfaceImplementationTransformerInvoker;
+import cz.ladicek.invoker.benchmark.reflection.ReflectionMethodTransformerInvoker;
+import cz.ladicek.invoker.benchmark.reflection.ReflectionSingleInterfaceImplementationTransformerInvoker;
 import cz.ladicek.invoker.benchmark.beans.InvokableBean;
 import cz.ladicek.invoker.benchmark.cdi.Invoker;
 import cz.ladicek.invoker.benchmark.weld.WeldDirectInvoker;
@@ -34,6 +38,11 @@ public class InvokerBenchmark {
     private Invoker<InvokableBean, String> weldDirectInvoker;
     private Invoker<InvokableBean, String> weldMethodTransformerInvoker;
 
+    private Invoker<InvokableBean, String> reflectionDirectInvoker;
+    private Invoker<InvokableBean, String> reflectionMethodTransformerInvoker;
+    private Invoker<InvokableBean, String> reflectionSingleInterfaceImplementationTransformerInvoker;
+    private Invoker<InvokableBean, String> reflectionFreshInterfaceImplementationTransformerInvoker;
+
     @Setup
     public void setup() {
         bean = new InvokableBean();
@@ -45,6 +54,11 @@ public class InvokerBenchmark {
 
         weldDirectInvoker = WeldDirectInvoker.INSTANCE;
         weldMethodTransformerInvoker = WeldMethodTransformerInvoker.INSTANCE;
+
+        reflectionDirectInvoker = ReflectionDirectInvoker.INSTANCE;
+        reflectionMethodTransformerInvoker = ReflectionMethodTransformerInvoker.INSTANCE;
+        reflectionSingleInterfaceImplementationTransformerInvoker = ReflectionSingleInterfaceImplementationTransformerInvoker.INSTANCE;
+        reflectionFreshInterfaceImplementationTransformerInvoker = ReflectionFreshInterfaceImplementationTransformerInvoker.INSTANCE;
     }
 
     @Benchmark
@@ -80,5 +94,25 @@ public class InvokerBenchmark {
     @Benchmark
     public String weldMethodTransformerInvoker() {
         return weldMethodTransformerInvoker.invoke(bean, new Object[]{42});
+    }
+
+    @Benchmark
+    public String reflectionDirectInvoker() {
+        return reflectionDirectInvoker.invoke(bean, new Object[]{42});
+    }
+
+    @Benchmark
+    public String reflectionMethodTransformerInvoker() {
+        return reflectionMethodTransformerInvoker.invoke(bean, new Object[]{42});
+    }
+
+    @Benchmark
+    public String reflectionSingleInterfaceImplementationTransformerInvoker() {
+        return reflectionSingleInterfaceImplementationTransformerInvoker.invoke(bean, new Object[]{42});
+    }
+
+    @Benchmark
+    public String reflectionFreshInterfaceImplementationTransformerInvoker() {
+        return reflectionFreshInterfaceImplementationTransformerInvoker.invoke(bean, new Object[]{42});
     }
 }

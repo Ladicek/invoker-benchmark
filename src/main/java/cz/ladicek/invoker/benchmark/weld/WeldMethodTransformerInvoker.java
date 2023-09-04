@@ -17,19 +17,27 @@ import java.util.List;
 public class WeldMethodTransformerInvoker implements Invoker<InvokableBean, String> {
     public static final Invoker<InvokableBean, String> INSTANCE = new WeldMethodTransformerInvoker();
 
-    private final Method method;
     private final MethodHandle mh;
 
     private WeldMethodTransformerInvoker() {
         try {
-            this.method = InvokableBean.class.getDeclaredMethod("hello", int.class);
-
+            Method method = InvokableBean.class.getDeclaredMethod("hello", int.class);
             Method transformer = InvokableBean.class.getDeclaredMethod("transform", String.class);
 
             MethodHandle mh = Utils.getMethodHandle(method, method.getParameterTypes());
             mh = MethodHandles.filterReturnValue(mh, Utils.createMethodHandleFromTransformer(
-                    Utils.TransformerKind.RETURN_VALUE, transformer, method.getReturnType()));
-            this.mh = mh;
+                    Utils.TransformerKind.RETURN_VALUE, transformer, mh.type().returnType()));
+
+            if (Modifier.isStatic(method.getModifiers())) {
+                MethodHandle invoker = MethodHandles.spreadInvoker(mh.type(), 0);
+                invoker = MethodHandles.insertArguments(invoker, 0, mh);
+                invoker = MethodHandles.dropArguments(invoker, 0, Object.class);
+                this.mh = invoker;
+            } else {
+                MethodHandle invoker = MethodHandles.spreadInvoker(mh.type(), 1);
+                invoker = MethodHandles.insertArguments(invoker, 0, mh);
+                this.mh = invoker;
+            }
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -37,18 +45,8 @@ public class WeldMethodTransformerInvoker implements Invoker<InvokableBean, Stri
 
     @Override
     public String invoke(InvokableBean instance, Object[] arguments) {
-        List<Object> args = new ArrayList<>(arguments.length + 1);
-        for (int i = 0; i < arguments.length; i++) {
-            args.add(i, arguments[i]);
-        }
-
-        // for non-static methods, first arg is the instance to invoke it on
-        if (!Modifier.isStatic(method.getModifiers())) {
-            args.add(0, instance);
-        }
-
         try {
-            return (String) mh.invokeWithArguments(args);
+            return (String) mh.invoke(instance, arguments);
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }

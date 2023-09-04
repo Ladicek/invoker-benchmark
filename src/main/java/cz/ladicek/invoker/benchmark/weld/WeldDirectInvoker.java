@@ -16,13 +16,24 @@ import java.util.List;
 public class WeldDirectInvoker implements Invoker<InvokableBean, String> {
     public static final Invoker<InvokableBean, String> INSTANCE = new WeldDirectInvoker();
 
-    private final Method method;
     private final MethodHandle mh;
 
     private WeldDirectInvoker() {
         try {
-            this.method = InvokableBean.class.getDeclaredMethod("hello", int.class);
-            this.mh = Utils.getMethodHandle(method, method.getParameterTypes());
+            Method method = InvokableBean.class.getDeclaredMethod("hello", int.class);
+
+            MethodHandle mh = Utils.getMethodHandle(method, method.getParameterTypes());
+
+            if (Modifier.isStatic(method.getModifiers())) {
+                MethodHandle invoker = MethodHandles.spreadInvoker(mh.type(), 0);
+                invoker = MethodHandles.insertArguments(invoker, 0, mh);
+                invoker = MethodHandles.dropArguments(invoker, 0, Object.class);
+                this.mh = invoker;
+            } else {
+                MethodHandle invoker = MethodHandles.spreadInvoker(mh.type(), 1);
+                invoker = MethodHandles.insertArguments(invoker, 0, mh);
+                this.mh = invoker;
+            }
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -30,18 +41,8 @@ public class WeldDirectInvoker implements Invoker<InvokableBean, String> {
 
     @Override
     public String invoke(InvokableBean instance, Object[] arguments) {
-        List<Object> args = new ArrayList<>(arguments.length + 1);
-        for (int i = 0; i < arguments.length; i++) {
-            args.add(i, arguments[i]);
-        }
-
-        // for non-static methods, first arg is the instance to invoke it on
-        if (!Modifier.isStatic(method.getModifiers())) {
-            args.add(0, instance);
-        }
-
         try {
-            return (String) mh.invokeWithArguments(args);
+            return (String) mh.invoke(instance, arguments);
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
